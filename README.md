@@ -43,4 +43,4 @@ XX XXX XXX X XXXXXXXXXXXXXXX XXX XX XXX XXXXXXXXXXXXXXXX
 ```
 
 The former suggests the logical structure more so than the latter, which
-simply appears as a long line. 
+simply appears as a long line.
