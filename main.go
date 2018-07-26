@@ -26,8 +26,11 @@ var (
 )
 
 var (
+	mask = flag.String("m", "X", "What character to mask with")
+)
+
+var (
 	exitCode = 0
-	masker   = byte('X')
 	regex    = new(regexp.Regexp)
 )
 
@@ -132,7 +135,7 @@ func maskRunes(b []byte) []byte {
 		case unicode.IsSpace(rune(r)):
 			mskd[i] = r
 		default:
-			mskd[i] = masker
+			mskd[i] = byte((*mask)[0])
 		}
 	}
 	return mskd
