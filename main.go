@@ -11,8 +11,8 @@ import (
 
 // General usage flags
 var (
-	read  = flag.String("f", "", "Input file (default: stdin)")
-	write = flag.String("o", "", "Output file (default: stdout)")
+	read  = flag.String("f", "", "Input file")
+	write = flag.String("o", "", "Output file")
 	help  = flag.Bool("h", false, "Print help and exit")
 )
 
@@ -32,9 +32,6 @@ var (
 )
 
 func setup() {
-	flag.Usage = func() {
-		flag.PrintDefaults()
-	}
 	flag.Parse()
 	if *help {
 		flag.Usage()
