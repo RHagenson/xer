@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -32,8 +31,16 @@ var (
 	regex    = new(regexp.Regexp)
 )
 
-func usage() {
-	flag.PrintDefaults()
+func setup() {
+	flag.Usage = func() {
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+	if *help {
+		flag.Usage()
+		os.Exit(1)
+	}
+	regex = regexp.MustCompile(*exp)
 }
 
 // xer takes in a file and projects an X in place of non-whitespace
@@ -44,65 +51,72 @@ func main() {
 	// call xerMain in a separate function
 	// so that it can use defer and have them
 	// run before the exit.
+	setup()
 	xerMain()
 	os.Exit(exitCode)
 }
 
 func xerMain() {
-	// Setup
-	flag.Usage = usage
-	flag.Parse()
-	if *help {
-		flag.Usage()
-		os.Exit(0)
-	}
-	regex = regexp.MustCompile(*exp)
-
-	// Open input
-	var in *os.File
-	var err error
-	switch *read {
-	case "":
-		in = os.Stdin
-	default:
-		if in, err = os.Open(*read); err != nil {
-			log.Fatal(err)
-		}
-	}
+	in := openInput(*read)
 	defer in.Close()
 
-	// Read in content
-	cont, err := ioutil.ReadAll(in)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "error: could not read file %s", *read)
-		exitCode = 2
-		return
-	}
-
-	// Mask content by rune
-	xedcont := maskRunes(cont)
-
-	// Unmask content by regex
-	nonemsked := regex.FindAllIndex(cont, -1)
-	for _, pair := range nonemsked {
-		for i := pair[0]; i < pair[1]; i++ {
-			xedcont[i] = cont[i]
-		}
-	}
-
-	// Opne output
-	var out *os.File
-	switch *write {
-	case "":
-		out = os.Stdout
-	default:
-		if out, err = os.Open(*write); err != nil {
-			log.Fatal(err)
-		}
-	}
+	out := openOutput(*write)
 	defer out.Close()
 
+	cont := readContent(in)
+
+	xedcont := maskRunes(cont)
+
+	rgis := findRegexIndexes(cont)
+
+	xedcont = unmaskByRegex(xedcont, cont, rgis)
+
 	out.Write(xedcont)
+	return
+}
+
+func openInput(s string) *os.File {
+	return openFileOrUse(s, os.Stdin)
+}
+
+func openOutput(s string) *os.File {
+	return openFileOrUse(s, os.Stdout)
+}
+
+func openFileOrUse(s string, f *os.File) *os.File {
+	if s != "" {
+		var (
+			out *os.File
+			err error
+		)
+		out, err = os.Open(*read)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return out
+	}
+	return f
+}
+
+func readContent(f *os.File) []byte {
+	cont, err := ioutil.ReadAll(f)
+	if err != nil {
+		log.Fatalf("error: could not read file %s", *read)
+	}
+	return cont
+}
+
+func findRegexIndexes(b []byte) [][]int {
+	return regex.FindAllIndex(b, -1)
+}
+
+func unmaskByRegex(masked, orig []byte, is [][]int) []byte {
+	for _, pair := range is {
+		for i := pair[0]; i < pair[1]; i++ {
+			masked[i] = orig[i]
+		}
+	}
+	return masked
 }
 
 func maskRunes(b []byte) []byte {
