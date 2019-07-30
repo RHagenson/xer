@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3355641.svg)](https://doi.org/10.5281/zenodo.3355641)
+
 # `xer`
 
 `xer` simple utility that Xs out every visual character to force looking at code layout over other elements of code structure. The idea spawned from a talk by Kevlin Henney and reading far too much code with triple-digit line lengths.
